@@ -323,29 +323,14 @@ Work:
 	return accumulated, unpsentOutputs
 }
 
-// FindTransactionForUTXO 根据交易ID查询到一个交易，仅仅查询UTXO的数据库，不需要迭代整个区块链
+// FindTransactionForUTXO 根据交易ID查询到一个交易，仅仅查询UTXOBlock的数据库，不需要迭代整个区块链
 func (bc *Blockchain) FindTransactionForUTXO(txID []byte) (Transaction, error) {
-	/*bci := bc.Iterator()
-
-	for {
-		block := bci.Next()
-
-		for _, tx := range block.Transactions {
-			if bytes.Compare(tx.ID, txID) == 0 {
-				return *tx, nil
-			}
-		}
-
-		if len(block.PrevBlockHash) == 0 {
-			break
-		}
-	}*/
 	var tnx Transaction
 	err := bc.Db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
-		blockb := tx.Bucket([]byte(utxoBlockBucket)) //UTXO
+		blockb := tx.Bucket([]byte(utxoBlockBucket)) //UTXOBlock
 
-		blockhash := blockb.Get(txID) //UTXO
+		blockhash := blockb.Get(txID) //UTXOBlock
 		blockData := b.Get(blockhash)
 		block := *DeserializeBlock(blockData)
 		for _, tx := range block.Transactions {
@@ -392,7 +377,7 @@ func (bc *Blockchain) SignTransaction(tx *Transaction, privKey ecdsa.PrivateKey)
 	prevTXs := make(map[string]Transaction)
 
 	for _, vin := range tx.Vin {
-		prevTX, err := bc.FindTransaction(vin.Txid) //通过交易输入引用的输出交易ID获得输出交易
+		prevTX, err := bc.FindTransactionForUTXO(vin.Txid) //通过交易输入引用的输出交易ID获得输出交易
 		if err != nil {
 			log.Panic(err)
 		}
@@ -411,7 +396,7 @@ func (bc *Blockchain) VerifyTransaction(tx *Transaction) bool {
 	prevTXs := make(map[string]Transaction)
 
 	for _, vin := range tx.Vin {
-		prevTX, err := bc.FindTransaction(vin.Txid)
+		prevTX, err := bc.FindTransactionForUTXO(vin.Txid)
 		if err != nil {
 			log.Panic(err)
 		}

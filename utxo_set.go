@@ -7,8 +7,12 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-const utxoBucket = "chainstate"                 //存储UTXO，目的是优化FindUTXO，不用迭代整个区块链（也就不用下载完整区块链）
-const utxoBlockBucket = "chainstate_blockid2tx" //存储UTXOBLOCK的哈希，目的是优化FindTransaction，不用迭代整个区块链（也就不用下载完整区块链）
+//存储UTXO，目的是优化FindUTXO，不用迭代整个区块链（也就不用下载完整区块链）
+const utxoBucket = "chainstate"
+
+//存储UTXOBLOCK的哈希，目的是优化FindTransaction
+//但仍然需要下载完整区块链，不过是通过数据库查询，这为P2P优化留下空间：我们可以从网络请求到某个交易
+const utxoBlockBucket = "chainstate_blockid2tx"
 
 // UTXOSet 代表UTXO集合
 type UTXOSet struct {
