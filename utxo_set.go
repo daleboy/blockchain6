@@ -194,12 +194,8 @@ func (u UTXOSet) Update(block *Block) {
 						}
 					}
 
-					if len(updatedOuts.Outputs) == 0 { //如果更新的UTXO的元素个数为0，从UTXO和UTXOBlock集中删除它
+					if len(updatedOuts.Outputs) == 0 { //如果更新的UTXO的元素个数为0，从UTXO集中删除它
 						err := b.Delete(vin.Txid)
-						if err != nil {
-							log.Panic(err)
-						}
-						err = blockb.Delete(vin.Txid)
 						if err != nil {
 							log.Panic(err)
 						}
