@@ -189,22 +189,22 @@ func (u UTXOSet) Update(block *Block) {
 					outs := DeserializeOutputs(outsBytes)
 
 					for outIdx, out := range outs.Outputs {
-						if outIdx != vin.Vout {
+						if outIdx != vin.Vout { //如果UTXO中的输出不包含在当前交易中，保留到更新的UTXO集中
 							updatedOuts.Outputs = append(updatedOuts.Outputs, out)
 						}
 					}
 
-					if len(updatedOuts.Outputs) == 0 {
+					if len(updatedOuts.Outputs) == 0 { //如果更新的UTXO的元素个数为0，从UTXO和UTXOBlock集中删除它
 						err := b.Delete(vin.Txid)
 						if err != nil {
 							log.Panic(err)
 						}
-					} else {
-						err := b.Put(vin.Txid, updatedOuts.Serialize())
+						err = blockb.Delete(vin.Txid)
 						if err != nil {
 							log.Panic(err)
 						}
-						err = blockb.Put(tx.ID, block.Hash)
+					} else { //如果更新的UTXO的元素个数不为0，更新UTXO
+						err := b.Put(vin.Txid, updatedOuts.Serialize())
 						if err != nil {
 							log.Panic(err)
 						}
@@ -213,12 +213,19 @@ func (u UTXOSet) Update(block *Block) {
 				}
 			}
 
+			//将新交易的输出加入到UTXO中
 			newOutputs := TxOutputs{}
 			for _, out := range tx.Vout {
 				newOutputs.Outputs = append(newOutputs.Outputs, out)
 			}
 
 			err := b.Put(tx.ID, newOutputs.Serialize())
+			if err != nil {
+				log.Panic(err)
+			}
+
+			//更新UTXOBlock
+			err = blockb.Put(tx.ID, block.Hash)
 			if err != nil {
 				log.Panic(err)
 			}
